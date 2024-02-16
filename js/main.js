@@ -1,117 +1,98 @@
-async function getDegree(dataInfo) {
-  var response = await fetch(
-    `http://api.weatherapi.com/v1/forecast.json?key=b21c7bbd22f64a6392180654240201&q=${dataInfo}&days=3`
+// Today Variable
+let todayName = document.getElementById("today_date_name");
+let todayNumber = document.getElementById("today_number");
+let todayMonth = document.getElementById("today_month");
+let todayCity = document.getElementById("today_date_city");
+let todayTemp = document.getElementById("today_date_temp");
+let todayCondationImg = document.getElementById("today_date_condation_img");
+let todayCondationstatus = document.getElementById(
+  "today_date_condation_status"
+);
+let humidity = document.getElementById("humidity");
+let wind = document.getElementById("wind");
+let windDirection = document.getElementById("windDirection");
+
+// Next Date
+let nextDay = document.getElementsByClassName("next_day_name");
+let nextCondationImg = document.getElementsByClassName("next_condation_img");
+let nextMaxTemp = document.getElementsByClassName("next_max_temp");
+let nextMinTemp = document.getElementsByClassName("next_min_temp");
+let nextCondationstatus = document.getElementsByClassName(
+  "next_condation_status"
+);
+
+// Search Input
+let searchInput = document.getElementById("search");
+
+let date = new Date();
+console.log(date.getDate());
+console.log(date.toLocaleDateString("en-us", { weekday: "long" }));
+console.log(date.toLocaleDateString("en-us", { month: "long" }));
+
+// Fetch Api Data
+async function getWeatherData(cityName) {
+  let response = await fetch(
+    `https://api.weatherapi.com/v1/forecast.json?key=b21c7bbd22f64a6392180654240201&q=${cityName}&days=3`
   );
-  if (response.ok && response.status != 400) {
-    let result = await response.json();
-    displayCurrent(result.location, result.current);
-    displayAll(result.forecast.forecastday);
+  let data = await response.json();
+  return data;
+}
+
+// display Today Data
+function displayTodyData(data) {
+  let todayDate = new Date();
+  todayName.innerHTML = todayDate.toLocaleDateString("en-us", {
+    weekday: "long",
+  });
+  todayNumber.innerHTML = todayDate.getDate();
+  todayMonth.innerHTML = todayDate.toLocaleDateString("en-us", {
+    month: "long",
+  });
+
+  todayCity.innerHTML = `${data.location.name}`;
+  todayTemp.innerHTML = `${data.current.temp_c} <sup>o</sup>C`;
+  todayCondationImg.setAttribute("src", data.current.condition.icon);
+  todayCondationstatus.setAttribute("src", data.current.condition.text);
+
+  humidity.innerHTML = `${data.current.humidity}%`;
+  wind.innerHTML = `${data.current.wind_kph}km/h`;
+  windDirection.innerHTML = `${data.current.wind_dir}`;
+  console.log(data);
+}
+
+// diplay next days data
+function displayNextData(data) {
+  let forecastData = data.forecast.forecastday;
+  for (let i = 0; i < 2; i++) {
+    let nextDate = new Date(forecastData[i + 1].date);
+    nextDay[i].innerHTML = nextDate.toLocaleDateString("en-us", {
+      weekday: "long",
+    });
+    nextCondationImg[i].setAttribute(
+      "src",
+      forecastData[i + 1].day.condition.icon
+    );
+    nextMaxTemp[i].innerHTML = `${
+      forecastData[i + 1].day.maxtemp_c
+    }<sup>o</sup>C`;
+    nextMinTemp[i].innerHTML = `${
+      forecastData[i + 1].day.mintemp_c
+    }<sup>o</sup>C`;
+    nextCondationstatus[i].innerHTML = forecastData[i + 1].day.condition.text;
   }
 }
-document.getElementById("search").addEventListener("keyup", (res) => {
-  getDegree(res.target.value);
+
+// print all data
+async function printData(city = "cairo") {
+  let weatherData = await getWeatherData(city);
+  if (!weatherData.error) {
+    displayTodyData(weatherData);
+    displayNextData(weatherData);
+  }
+}
+printData();
+
+searchInput.addEventListener("input", function () {
+  console.log(searchInput.value);
+  printData(searchInput.value);
 });
-
-var days = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
-const monthNames = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-function displayCurrent(location, current) {
-  if (current != null) {
-    var data = new Date(current.last_updated.replace(" ", "T"));
-    let cart = `
-    <div class="col-md-4 p-0">
-                            <div class="card " id="card">
-                            <div class="card-header d-flex justify-content-between" id="today">
-                                <span class="day">${days[data.getDay()]}</span>
-                                <span class="date">${
-                                  monthNames[data.getMonth()]
-                                }</span>
-                            </div>
-                            <div class="card-content" id="current">
-                                <p class="location">${location.name}</p>
-                                <div class="degree">
-                                    <h3 class="num">${
-                                      current.temp_c
-                                    }<sup>o</sup>C</h3>
-                                    <div class="degree-image">
-                                        <img src="${
-                                          current.condition.icon
-                                        }" width="90" alt="image">
-                                    </div>
-                                </div>
-                                <div class="status">${
-                                  current.condition.text
-                                }</div>
-                                <div class="info">
-                                    <span>
-                                        <img src="images/icon-umberella.png" alt="umberella">
-                                        20%
-                                    </span>
-                                    <span>
-                                        <img src="images/icon-wind.png" alt="wind">
-                                        18km/h
-                                    </span>
-                                    <span>
-                                        <img src="images/icon-compass.png" alt="compass">
-                                        East
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-    `;
-    document.querySelector(".cards .row").innerHTML = cart;
-  }
-}
-function displayAll(castday) {
-  let container = "";
-  for (let i = 1; i < castday.length; i++) {
-    container += `
-    <div class="col-md-4 p-0">
-    <div class="card text-center" id="card">
-        <div class="card-header d-flex justify-content-center" id="today">
-            <span class="day">${
-              days[new Date(castday[i].date.replace(" ", "T")).getDate()]
-            }</span>
-        </div>
-        <div class="card-content" id="current">
-            <div class="card-image">
-                <img src=${
-                  castday[i].day.condition.icon
-                } width="48" alt="image">
-            </div>
-            <h4 class="degree text-white">
-            ${castday[i].day.maxtemp_c}
-            </h4>
-            <span>${castday[i].day.mintemp_c}</span>
-            <div class="status">${castday[i].day.condition.text}</div>
-        </div>
-    </div>
-</div>
-    `;
-  }
-  document.querySelector(".cards .row").innerHTML += container;
-}
-
-getDegree("cairo");
